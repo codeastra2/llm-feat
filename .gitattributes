@@ -1,0 +1,3 @@
+# Prevent accidental commit of secrets
+*.ipynb filter=strip-notebook-output
+
