@@ -3,7 +3,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.10.19%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-llm-feat is a Python library which can  automatically generate feature engineering code in Jupyter notebooks for your pandas datasets using LLM models. The features will be meaningful and can be also automatically added to the pandas dataframe or features addition code can be just modified later to pick and choose features. 
+llm-feat is a Python library that automatically generates feature engineering code for pandas datasets using Large Language Models. Generate context-aware, target-specific features that can be automatically added to your DataFrame or customized before execution. 
 
 ## 🌟 Key Features
 
@@ -35,36 +35,37 @@ llm_feat.set_api_key("your-openai-api-key-here")
 ```
 
 ### 2. Prepare Data and Metadata
-
+Consider the problem of healthy and unhealthy labelling:
 ```python
-# Your dataset
+# Your dataset with target column
 df = pd.DataFrame({
-    'age': [25, 30, 35, 40, 45],
-    'income': [50000, 60000, 70000, 80000, 90000],
-    'savings': [10000, 15000, 20000, 25000, 30000],
-    'expenses': [40000, 45000, 50000, 55000, 60000]
+    'height': [170, 175, 180, 165, 185, 172, 178, 168, 182, 174],
+    'weight': [70, 75, 80, 65, 85, 72, 78, 68, 83, 74],
+    'bmi': [24.2, 24.5, 24.7, 23.9, 24.8, 24.3, 24.6, 24.1, 25.0, 24.4],
+    'health_score': [1, 1, 0, 1, 0, 1, 1, 1, 0, 1]  # Target: 1=healthy, 0=unhealthy
 })
 
-# Metadata with column descriptions
+# Metadata with column descriptions and target definition
 metadata_df = pd.DataFrame({
-    'column_name': ['age', 'income', 'savings', 'expenses'],
+    'column_name': ['height', 'weight', 'bmi', 'health_score'],
     'description': [
-        'Age of the person in years',
-        'Annual income in dollars',
-        'Total savings in dollars',
-        'Annual expenses in dollars'
+        'Height in centimeters',
+        'Weight in kilograms',
+        'Body Mass Index',
+        'Health classification score'
     ],
     'data_type': ['numeric', 'numeric', 'numeric', 'numeric'],
-    'label_definition': [None, None, None, None]
+    'label_definition': [None, None, None, '1 if healthy, 0 if unhealthy']
 })
 ```
 
 ### 3. Generate Features
 
 #### Mode 1: Get Code (Recommended for Jupyter)
+We will now generate features for the above dataset based on feature descriptions in the metadata and prior knowledge of the LLM.
 
 ```python
-code = llm_feat.generate_features(df, metadata_df, mode='code')
+code = llm_feat.generate_features(df, metadata_df, mode='code', model='gpt-4o-mini')
 print(code)
 ```
 
@@ -72,35 +73,50 @@ print(code)
 ```python
 import numpy as np
 
-df['income_to_expense_ratio'] = np.where(df['expenses'] != 0, df['income'] / df['expenses'], np.nan)
-df['savings_to_income_ratio'] = np.where(df['income'] != 0, df['savings'] / df['income'], np.nan)
-df['net_savings'] = df['savings'] - df['expenses']
-df['age_squared'] = df['age'] ** 2
-df['income_per_age'] = np.where(df['age'] != 0, df['income'] / df['age'], np.nan)
+df['height_weight_ratio'] = df['height'] / df['weight'].replace(0, np.nan)
+df['bmi_squared'] = df['bmi'] ** 2
+df['weight_bmi_interaction'] = df['weight'] * df['bmi']
+df['health_score_bmi_diff'] = df['health_score'] - df['bmi'].apply(lambda x: 1 if x < 24.9 else 0)
+df['height_bmi_category'] = pd.cut(df['bmi'], bins=[0, 18.5, 24.9, 29.9, np.inf], 
+                                    labels=['Underweight', 'Normal', 'Overweight', 'Obese'])
 ```
 
-> **Note**: In Jupyter notebooks, the code is automatically injected into the next cell.
+> **Note**: In Jupyter notebooks, the code is automatically injected into the next cell. The LLM generates target-aware features that are relevant to predicting `health_score`.
 
 #### Mode 2: Direct Feature Addition
 
 ```python
-df_with_features = llm_feat.generate_features(df, metadata_df, mode='direct')
+df_with_features = llm_feat.generate_features(df, metadata_df, mode='direct', model='gpt-4o-mini')
 print(df_with_features.head())
 ```
 
 **Example Output:**
 ```
-   age  income  savings  expenses  income_to_expense_ratio  savings_to_income_ratio  net_savings  age_squared  income_per_age
-0   25   50000    10000     40000                 1.250000                 0.200000       -30000          625          2000.0
-1   30   60000    15000     45000                 1.333333                 0.250000       -30000          900          2000.0
-2   35   70000    20000     50000                 1.400000                 0.285714       -30000         1225          2000.0
+   height  weight   bmi  health_score  height_weight_ratio  bmi_squared  \
+0     170      70  24.2             1             2.428571      585.64   
+1     175      75  24.5             1             2.333333      600.25   
+2     180      80  24.7             0             2.250000      610.09   
+
+   weight_bmi_interaction  health_score_bmi_diff height_bmi_category  
+0                1694.0                      0              Normal  
+1                1837.5                      0              Normal  
+2                1976.0                      0              Normal  
 ```
 
 ## 📖 Usage Examples
 
-See [test_llm_feat.ipynb](test_llm_feat.ipynb) for complete usage examples in Jupyter notebook format.
+### Jupyter Notebook Example
 
-> **Note**: The notebook examples use `df` as the DataFrame variable name, which is required for the generated code to work directly.
+See [example_llm_feat.ipynb](example_llm_feat.ipynb) for complete usage examples in Jupyter notebook format.
+
+### Python Script Example
+
+You can also run the example as a standalone Python script:
+
+```bash
+poetry run python example_llm_feat.py
+```
+> **Note**: The notebook and script examples use `df` as the DataFrame variable name, which is required for the generated code to work directly.
 
 
 ## Development Installation
