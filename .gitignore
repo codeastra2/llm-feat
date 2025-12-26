@@ -51,6 +51,7 @@ ENV/
 *_key.txt
 *_secret.txt
 *api_key*
+*keys.txt*
 *secret*
 secrets.json
 config.json
@@ -59,6 +60,7 @@ config.json
 .pytest_cache/
 .coverage
 htmlcov/
+*ideas.txt*
 
 # OS
 .DS_Store

@@ -1,15 +1,19 @@
-name: CI
+name: Publish to PyPI
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  release:
+    types: [published]
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
-  test:
+  publish:
     runs-on: ubuntu-latest
-    
+    environment:
+      name: pypi
+      url: https://pypi.org/p/llm-feat
+    permissions:
+      id-token: write  # Required for Trusted Publishing (no API token needed!)
+
     steps:
     - uses: actions/checkout@v4
     
@@ -36,9 +40,11 @@ jobs:
     - name: Install dependencies
       run: poetry install
     
-    - name: Run tests
-      run: poetry run pytest
+    - name: Build package
+      run: poetry build
     
-    - name: Check code style
-      run: poetry run flake8 .
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      # Uses PyPI Trusted Publishing via OIDC - no API token needed!
+      # Note: You need to set up Trusted Publishing on PyPI first (see README)
 

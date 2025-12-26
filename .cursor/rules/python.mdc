@@ -3,4 +3,4 @@ alwaysApply: true
 ---
 
 Every command in this project must be run after activating the conda environment.
-THe conda environment of this project is called llm_feat and should be activated by running conda activate llm_feat.
+THe conda environment of this project is called llm_feat and should be activated by running conda activate llm_feat_310.
