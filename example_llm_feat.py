@@ -8,7 +8,6 @@ for tabular data using Large Language Models.
 Run with: poetry run python example_llm_feat.py
 """
 
-import os
 import sys
 
 import numpy as np
@@ -32,7 +31,7 @@ def main():
 
     # Set API key
     print_section("API Key Setup")
-    api_key = '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'
+    api_key = "<OPENAI_API_KEY>"
     if not api_key:
         print("⚠️  OPENAI_API_KEY not set in environment.")
         print("   Please set it using: export OPENAI_API_KEY='your-key-here'")
@@ -93,7 +92,9 @@ def main():
     exec(code1, {"df": df1, "pd": pd, "np": np})
     print("\nDataFrame after executing generated code:")
     print(df1.head())
-    print(f"\nNew columns added: {[col for col in df1.columns if col not in ['age', 'income', 'savings', 'expenses']]}")
+    print(
+        f"\nNew columns added: {[col for col in df1.columns if col not in ['age', 'income', 'savings', 'expenses']]}"
+    )
 
     # Mode 2: Direct Feature Addition
     print_section("Mode 2: Direct Feature Addition")
@@ -117,7 +118,9 @@ def main():
     print("DataFrame with new features:")
     print(df_with_features.head())
     print(f"\nOriginal columns: {list(df1_fresh.columns)}")
-    print(f"New columns: {[col for col in df_with_features.columns if col not in df1_fresh.columns]}")
+    print(
+        f"New columns: {[col for col in df_with_features.columns if col not in df1_fresh.columns]}"
+    )
     print(f"\nTotal columns: {len(df_with_features.columns)} (original: {len(df1_fresh.columns)})")
 
     # Example 2: Dataset with Target Column
@@ -165,7 +168,9 @@ def main():
     exec(code2, {"df": df2, "pd": pd, "np": np})
     print("\nDataFrame after executing generated code:")
     print(df2.head())
-    print(f"\nNew columns added: {[col for col in df2.columns if col not in ['height', 'weight', 'bmi', 'health_score']]}")
+    print(
+        f"\nNew columns added: {[col for col in df2.columns if col not in ['height', 'weight', 'bmi', 'health_score']]}"
+    )
 
     # Summary
     print_section("Summary")
@@ -182,4 +187,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
