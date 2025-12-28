@@ -33,6 +33,7 @@ class LLMClient:
         target_column: Optional[str] = None,
         categorical_cols: Optional[list] = None,
         model: str = "gpt-4o",
+        problem_description: Optional[str] = None,
     ) -> str:
         """
         Generate feature engineering code using GPT-4.
@@ -45,11 +46,15 @@ class LLMClient:
             categorical_cols: List of categorical column names
             model: OpenAI model to use (default: "gpt-4o", alternatives:
                   "gpt-4-turbo", "gpt-3.5-turbo")
+            problem_description: Optional description of the problem/use case
+                                to provide additional context
 
         Returns:
             Generated Python code for feature engineering
         """
-        prompt = self._build_prompt(df_info, metadata_info, target_column, categorical_cols)
+        prompt = self._build_prompt(
+            df_info, metadata_info, target_column, categorical_cols, problem_description
+        )
 
         try:
             response = self.client.chat.completions.create(
@@ -133,6 +138,7 @@ class LLMClient:
         metadata_info: str,
         target_column: Optional[str],
         categorical_cols: Optional[list] = None,
+        problem_description: Optional[str] = None,
     ) -> str:
         """Build the prompt for feature generation"""
 
@@ -148,6 +154,17 @@ METADATA INFORMATION (CRITICAL - USE THESE DESCRIPTIONS TO UNDERSTAND """
 {metadata_info}
 """
         )
+
+        if problem_description:
+            prompt += (
+                f"""
+PROBLEM DESCRIPTION (ADDITIONAL CONTEXT):
+{problem_description}
+
+Use this problem description to better understand the business context and """
+                f"""generate features that are specifically relevant to this use case.
+"""
+            )
 
         if target_column:
             prompt += (

@@ -160,6 +160,7 @@ def generate_features(
     api_key: Optional[str] = None,
     model: str = "gpt-4o",
     debug: bool = False,
+    problem_description: Optional[str] = None,
 ) -> pd.DataFrame | str:
     """
     Generate feature engineering code or directly add features to DataFrame.
@@ -178,6 +179,9 @@ def generate_features(
                "gpt-4-turbo", "gpt-3.5-turbo")
         debug: If True, print the generated code before execution (useful
                for troubleshooting)
+        problem_description: Optional description of the problem/use case
+                           to provide additional context to the LLM for
+                           generating more relevant features
 
     Note:
         Generated code uses 'df' as the DataFrame variable name.
@@ -209,7 +213,12 @@ def generate_features(
     # Generate feature code using LLM
     client = _get_client()
     generated_code = client.generate_feature_code(
-        df_info, metadata_info, target_column, categorical_cols, model=model
+        df_info,
+        metadata_info,
+        target_column,
+        categorical_cols,
+        model=model,
+        problem_description=problem_description,
     )
 
     # Validate that generated code contains DataFrame assignments
