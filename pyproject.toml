@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llm-feat"
-version = "0.1.0"
+version = "0.2.0"
 description = "Automated feature engineering using Large Language Models (LLMs) for tabular data"
 authors = ["Srinivas Kumar <srinivas1996kumar@gmail.com>"]
 readme = "README.md"
