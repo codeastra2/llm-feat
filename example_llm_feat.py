@@ -47,7 +47,7 @@ def main():
     print_section("Example 1: Simple Numerical Dataset")
 
     # Create a simple numerical dataset
-    df1 = pd.DataFrame(
+    df = pd.DataFrame(
         {
             "age": [25, 30, 35, 40, 45, 50, 28, 32, 38, 42],
             "income": [50000, 60000, 70000, 80000, 90000, 100000, 55000, 65000, 75000, 85000],
@@ -57,9 +57,9 @@ def main():
     )
 
     print("Original DataFrame:")
-    print(df1.head())
-    print(f"\nShape: {df1.shape}")
-    print(f"Columns: {list(df1.columns)}")
+    print(df.head())
+    print(f"\nShape: {df.shape}")
+    print(f"Columns: {list(df.columns)}")
 
     # Create metadata DataFrame
     metadata_df1 = pd.DataFrame(
@@ -84,17 +84,17 @@ def main():
     print("Generating feature engineering code...")
     print("(Using gpt-4o-mini model for cost-effective feature generation)\n")
 
-    code1 = llm_feat.generate_features(df1, metadata_df1, mode="code", model="gpt-4o-mini")
+    code1 = llm_feat.generate_features(df, metadata_df1, mode="code", model="gpt-4o-mini")
     print("Generated code:")
     print(code1)
 
     # Execute the generated code
     print("\nExecuting generated code...")
-    exec(code1, {"df": df1, "pd": pd, "np": np})
+    exec(code1, {"df": df, "pd": pd, "np": np})
     print("\nDataFrame after executing generated code:")
-    print(df1.head())
+    print(df.head())
     print(
-        f"\nNew columns added: {[col for col in df1.columns if col not in ['age', 'income', 'savings', 'expenses']]}"
+        f"\nNew columns added: {[col for col in df.columns if col not in ['age', 'income', 'savings', 'expenses']]}"
     )
 
     # Mode 2: Direct Feature Addition
@@ -103,7 +103,7 @@ def main():
     print("(Using gpt-4o-mini model for cost-effective feature generation)\n")
 
     # Create a fresh copy for direct mode
-    df1_fresh = pd.DataFrame(
+    df = pd.DataFrame(
         {
             "age": [25, 30, 35, 40, 45, 50, 28, 32, 38, 42],
             "income": [50000, 60000, 70000, 80000, 90000, 100000, 55000, 65000, 75000, 85000],
@@ -112,23 +112,20 @@ def main():
         }
     )
 
-    df_with_features = llm_feat.generate_features(
-        df1_fresh, metadata_df1, mode="direct", model="gpt-4o-mini"
-    )
+    df = llm_feat.generate_features(df, metadata_df1, mode="direct", model="gpt-4o-mini")
 
     print("DataFrame with new features:")
-    print(df_with_features.head())
-    print(f"\nOriginal columns: {list(df1_fresh.columns)}")
-    print(
-        f"New columns: {[col for col in df_with_features.columns if col not in df1_fresh.columns]}"
-    )
-    print(f"\nTotal columns: {len(df_with_features.columns)} (original: {len(df1_fresh.columns)})")
+    print(df.head())
+    original_cols = ["age", "income", "savings", "expenses"]
+    print(f"\nOriginal columns: {original_cols}")
+    print(f"New columns: {[col for col in df.columns if col not in original_cols]}")
+    print(f"\nTotal columns: {len(df.columns)} (original: {len(original_cols)})")
 
     # Example 2: Dataset with Target Column
     print_section("Example 2: Dataset with Target Column")
 
     # Create dataset with target column
-    df2 = pd.DataFrame(
+    df = pd.DataFrame(
         {
             "height": [170, 175, 180, 165, 185, 172, 178, 168, 182, 174],
             "weight": [70, 75, 80, 65, 85, 72, 78, 68, 83, 74],
@@ -152,7 +149,7 @@ def main():
     )
 
     print("Dataset with target:")
-    print(df2.head())
+    print(df.head())
     print("\nMetadata:")
     print(metadata_df2)
 
@@ -160,18 +157,33 @@ def main():
     print_section("Generating Features for Dataset with Target")
     print("(Using gpt-4o-mini model for cost-effective feature generation)\n")
 
-    code2 = llm_feat.generate_features(df2, metadata_df2, mode="code", model="gpt-4o-mini")
+    code2 = llm_feat.generate_features(df, metadata_df2, mode="code", model="gpt-4o-mini")
     print("Generated feature code:")
     print(code2)
 
     # Execute the generated code
     print("\nExecuting generated code...")
-    exec(code2, {"df": df2, "pd": pd, "np": np})
+    exec(code2, {"df": df, "pd": pd, "np": np})
     print("\nDataFrame after executing generated code:")
-    print(df2.head())
+    print(df.head())
     print(
-        f"\nNew columns added: {[col for col in df2.columns if col not in ['height', 'weight', 'bmi', 'health_score']]}"
+        f"\nNew columns added: {[col for col in df.columns if col not in ['height', 'weight', 'bmi', 'health_score']]}"
     )
+
+    # Example with Feature Report
+    print("\n" + "-" * 70)
+    print("Generating Features with Report")
+    print("-" * 70 + "\n")
+
+    code2_with_report, report2 = llm_feat.generate_features(
+        df, metadata_df2, mode="code", model="gpt-4o-mini", return_report=True
+    )
+    print("Generated feature code:")
+    print(code2_with_report)
+    print("\n" + "=" * 70)
+    print("FEATURE REPORT")
+    print("=" * 70)
+    print(report2)
 
     # Example 3: Partial Metadata (Many Columns, Few Descriptions)
     print_section("Example 3: Partial Metadata (Many Columns, Few Descriptions)")
@@ -182,7 +194,7 @@ def main():
     )
 
     # Create a dataset with many columns (simulating a real-world scenario)
-    df3 = pd.DataFrame(
+    df = pd.DataFrame(
         {
             "customer_id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             "age": [25, 30, 35, 40, 45, 28, 32, 38, 42, 50],
@@ -209,9 +221,9 @@ def main():
     )
 
     print("DataFrame with many columns:")
-    print(df3.head())
-    print(f"\nTotal columns: {len(df3.columns)}")
-    print(f"Columns: {list(df3.columns)}")
+    print(df.head())
+    print(f"\nTotal columns: {len(df.columns)}")
+    print(f"Columns: {list(df.columns)}")
 
     # Provide metadata for only a FEW important columns (not all columns)
     metadata_df3 = pd.DataFrame(
@@ -232,13 +244,13 @@ def main():
     print(metadata_df3)
     print(f"\nColumns with metadata: {list(metadata_df3['column_name'])}")
     print(
-        f"Columns without metadata: {[col for col in df3.columns if col not in metadata_df3['column_name'].values]}"
+        f"Columns without metadata: {[col for col in df.columns if col not in metadata_df3['column_name'].values]}"
     )
 
     print("\nGenerating features - LLM will use ALL columns, not just the ones with metadata...")
     print("(Using gpt-4o-mini model for cost-effective feature generation)\n")
 
-    code3 = llm_feat.generate_features(df3, metadata_df3, mode="code", model="gpt-4o-mini")
+    code3 = llm_feat.generate_features(df, metadata_df3, mode="code", model="gpt-4o-mini")
     print("Generated feature code (using all columns, with context from described columns):")
     print(code3)
 
@@ -247,15 +259,14 @@ def main():
     print("Direct Feature Addition with Partial Metadata")
     print("-" * 70 + "\n")
 
-    df3_with_features = llm_feat.generate_features(
-        df3, metadata_df3, mode="direct", model="gpt-4o-mini"
-    )
+    df = llm_feat.generate_features(df, metadata_df3, mode="direct", model="gpt-4o-mini")
 
     print("DataFrame with new features:")
-    print(df3_with_features.head())
-    print(f"\nOriginal columns: {len(df3.columns)}")
-    print(f"New columns added: {len(df3_with_features.columns) - len(df3.columns)}")
-    print(f"Total columns: {len(df3_with_features.columns)}")
+    print(df.head())
+    original_cols_count = 10
+    print(f"\nOriginal columns: {original_cols_count}")
+    print(f"New columns added: {len(df.columns) - original_cols_count}")
+    print(f"Total columns: {len(df.columns)}")
 
     print(
         "\n**Key Takeaway:** You don't need to provide metadata for every column! "
@@ -273,7 +284,7 @@ def main():
     )
 
     # Create a dataset for e-commerce customer churn prediction
-    df4 = pd.DataFrame(
+    df = pd.DataFrame(
         {
             "customer_id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             "total_purchases": [15, 8, 25, 3, 30, 12, 20, 5, 18, 22],
@@ -327,15 +338,15 @@ def main():
     )
 
     print("E-commerce Customer Dataset:")
-    print(df4.head())
-    print(f"\nShape: {df4.shape}")
+    print(df.head())
+    print(f"\nShape: {df.shape}")
 
     # Without Problem Description
     print("\n" + "-" * 70)
     print("Without Problem Description")
     print("-" * 70 + "\n")
 
-    code4_no_desc = llm_feat.generate_features(df4, metadata_df4, mode="code", model="gpt-4o-mini")
+    code4_no_desc = llm_feat.generate_features(df, metadata_df4, mode="code", model="gpt-4o-mini")
     print("Generated code WITHOUT problem description:")
     print(code4_no_desc)
 
@@ -358,7 +369,7 @@ Generate features that help identify these at-risk customer segments.
 
     # Generate features WITH problem description
     code4_with_desc = llm_feat.generate_features(
-        df4, metadata_df4, mode="code", model="gpt-4o-mini", problem_description=problem_desc
+        df, metadata_df4, mode="code", model="gpt-4o-mini", problem_description=problem_desc
     )
     print("Generated code WITH problem description:")
     print(code4_with_desc)
@@ -368,18 +379,26 @@ Generate features that help identify these at-risk customer segments.
     print("Direct Mode with Problem Description")
     print("-" * 70 + "\n")
 
-    df4_with_features = llm_feat.generate_features(
-        df4, metadata_df4, mode="direct", model="gpt-4o-mini", problem_description=problem_desc
+    df = llm_feat.generate_features(
+        df, metadata_df4, mode="direct", model="gpt-4o-mini", problem_description=problem_desc
     )
 
     print("DataFrame with features generated using problem description:")
-    print(df4_with_features.head())
-    print(f"\nOriginal columns: {len(df4.columns)}")
-    print(f"New columns added: {len(df4_with_features.columns) - len(df4.columns)}")
-    print(f"Total columns: {len(df4_with_features.columns)}")
-    print(
-        f"\nNew feature columns: {[col for col in df4_with_features.columns if col not in df4.columns]}"
-    )
+    print(df.head())
+    original_cols_count = 7
+    print(f"\nOriginal columns: {original_cols_count}")
+    print(f"New columns added: {len(df.columns) - original_cols_count}")
+    print(f"Total columns: {len(df.columns)}")
+    original_cols_list = [
+        "customer_id",
+        "total_purchases",
+        "avg_order_value",
+        "days_since_last_purchase",
+        "support_tickets",
+        "account_age_days",
+        "churned",
+    ]
+    print(f"\nNew feature columns: {[col for col in df.columns if col not in original_cols_list]}")
 
     print(
         "\n**Key Takeaway:** The `problem_description` parameter allows you to provide business context, "
@@ -387,6 +406,78 @@ Generate features that help identify these at-risk customer segments.
         "more aligned with your business objectives, better suited for your specific use case, and "
         "tailored to domain-specific patterns and insights."
     )
+
+    # Example 5: Feature Report
+    print_section("Example 5: Generating Feature Report")
+    print(
+        "This example demonstrates how to get a detailed report explaining the domain understanding "
+        "and rationale for each generated feature.\n"
+    )
+
+    # Use a simple dataset for report demonstration
+    df = pd.DataFrame(
+        {
+            "age": [25, 30, 35, 40, 45],
+            "income": [50000, 60000, 70000, 80000, 90000],
+            "credit_score": [650, 720, 680, 750, 710],
+            "loan_default": [0, 0, 1, 0, 1],  # Target
+        }
+    )
+
+    metadata_df5 = pd.DataFrame(
+        {
+            "column_name": ["age", "income", "credit_score", "loan_default"],
+            "description": [
+                "Age of the borrower",
+                "Annual income in dollars",
+                "Credit score (300-850)",
+                "Loan default status",
+            ],
+            "data_type": ["numeric", "numeric", "numeric", "numeric"],
+            "label_definition": [None, None, None, "1 if defaulted, 0 if not"],
+        }
+    )
+
+    print("Dataset:")
+    print(df.head())
+
+    # Generate with report
+    code5, report5 = llm_feat.generate_features(
+        df, metadata_df5, mode="code", model="gpt-4o-mini", return_report=True
+    )
+
+    print("\nGenerated Code:")
+    print(code5)
+    print("\n" + "=" * 70)
+    print("FEATURE REPORT")
+    print("=" * 70)
+    print(report5)
+
+    # Direct mode with report
+    print("\n" + "-" * 70)
+    print("Direct Mode with Report")
+    print("-" * 70 + "\n")
+
+    # Create a fresh copy for direct mode
+    df = pd.DataFrame(
+        {
+            "age": [25, 30, 35, 40, 45],
+            "income": [50000, 60000, 70000, 80000, 90000],
+            "credit_score": [650, 720, 680, 750, 710],
+            "loan_default": [0, 0, 1, 0, 1],  # Target
+        }
+    )
+
+    df, report5_direct = llm_feat.generate_features(
+        df, metadata_df5, mode="direct", model="gpt-4o-mini", return_report=True
+    )
+
+    print("DataFrame with features:")
+    print(df.head())
+    print("\n" + "=" * 70)
+    print("FEATURE REPORT")
+    print("=" * 70)
+    print(report5_direct)
 
     # Summary
     print_section("Summary")
@@ -400,6 +491,7 @@ Generate features that help identify these at-risk customer segments.
         "✓ Works with partial metadata (you can provide descriptions for only a subset of columns)"
     )
     print("✓ Supports problem description for additional business context")
+    print("✓ Can generate feature reports with domain understanding and feature explanations")
     print("\n" + "=" * 70)
     print("Example completed successfully!")
     print("=" * 70 + "\n")

@@ -161,7 +161,8 @@ def generate_features(
     model: str = "gpt-4o",
     debug: bool = False,
     problem_description: Optional[str] = None,
-) -> pd.DataFrame | str:
+    return_report: bool = False,
+) -> pd.DataFrame | str | tuple[str, str] | tuple[pd.DataFrame, str]:
     """
     Generate feature engineering code or directly add features to DataFrame.
 
@@ -182,6 +183,9 @@ def generate_features(
         problem_description: Optional description of the problem/use case
                            to provide additional context to the LLM for
                            generating more relevant features
+        return_report: If True, also return a feature report containing
+                      domain understanding and explanations for each generated
+                      feature
 
     Note:
         Generated code uses 'df' as the DataFrame variable name.
@@ -189,9 +193,12 @@ def generate_features(
         variable name in the generated code.
 
     Returns:
-        - If mode='code': Returns code string (and injects to next cell
+        - If mode='code' and return_report=False: Returns code string (and injects to next cell
           if in Jupyter)
-        - If mode='direct': Returns DataFrame with new features added
+        - If mode='code' and return_report=True: Returns tuple (code, report) where report
+          contains domain understanding and feature explanations
+        - If mode='direct' and return_report=False: Returns DataFrame with new features added
+        - If mode='direct' and return_report=True: Returns tuple (DataFrame, report)
 
     Note:
         Categorical features are automatically detected from metadata_df
@@ -212,14 +219,21 @@ def generate_features(
 
     # Generate feature code using LLM
     client = _get_client()
-    generated_code = client.generate_feature_code(
+    result = client.generate_feature_code(
         df_info,
         metadata_info,
         target_column,
         categorical_cols,
         model=model,
         problem_description=problem_description,
+        return_report=return_report,
     )
+
+    if return_report:
+        generated_code, feature_report = result
+    else:
+        generated_code = result
+        feature_report = None
 
     # Validate that generated code contains DataFrame assignments
     if mode == "direct":
@@ -254,7 +268,10 @@ def generate_features(
             inject_code_to_next_cell(generated_code)
 
         # Also return as string
-        return get_code_string(generated_code)
+        code_string = get_code_string(generated_code)
+        if return_report:
+            return code_string, feature_report
+        return code_string
 
     elif mode == "direct":
         # Direct feature addition mode
@@ -321,6 +338,8 @@ def generate_features(
                     UserWarning,
                 )
 
+            if return_report:
+                return df_result, feature_report
             return df_result
         except Exception as e:
             raise RuntimeError(

@@ -34,7 +34,8 @@ class LLMClient:
         categorical_cols: Optional[list] = None,
         model: str = "gpt-4o",
         problem_description: Optional[str] = None,
-    ) -> str:
+        return_report: bool = False,
+    ) -> str | tuple[str, str]:
         """
         Generate feature engineering code using GPT-4.
 
@@ -48,12 +49,20 @@ class LLMClient:
                   "gpt-4-turbo", "gpt-3.5-turbo")
             problem_description: Optional description of the problem/use case
                                 to provide additional context
+            return_report: If True, also generate and return a feature report
 
         Returns:
-            Generated Python code for feature engineering
+            If return_report=False: Generated Python code for feature engineering
+            If return_report=True: Tuple of (code, report) where report contains
+                                  domain understanding and feature explanations
         """
         prompt = self._build_prompt(
-            df_info, metadata_info, target_column, categorical_cols, problem_description
+            df_info,
+            metadata_info,
+            target_column,
+            categorical_cols,
+            problem_description,
+            return_report,
         )
 
         try:
@@ -77,60 +86,146 @@ class LLMClient:
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.3,  # Lower temperature for more consistent code
-                max_tokens=2000,
+                max_tokens=4000 if return_report else 2000,
             )
 
-            code = response.choices[0].message.content.strip()
+            full_response = response.choices[0].message.content.strip()
 
-            # Extract code block if wrapped in markdown
-            if "```python" in code:
-                code = code.split("```python")[1].split("```")[0].strip()
-            elif "```" in code:
-                # Handle generic code blocks
-                parts = code.split("```")
-                if len(parts) >= 3:
-                    code = parts[1].strip()
-                    # Remove language identifier if present
-                    # (e.g., "python" at the start)
-                    if code.startswith("python"):
-                        code = code[6:].strip()
+            if return_report:
+                # Extract report and code separately
+                # Report should come first, then code
+                report = ""
+                code = ""
 
-            # Clean up any remaining markdown or explanations
-            # Remove any lines that are clearly not code (comments at
-            # start, explanations)
-            lines = code.split("\n")
-            cleaned_lines = []
-            in_code = False
-            for line in lines:
-                # Skip markdown headers, explanations, etc.
-                if line.strip().startswith("#") and not in_code:
-                    # Allow comments in code, but skip if it's clearly
-                    # an explanation
-                    skip_words = ["here", "example", "note:", "important:"]
-                    if any(word in line.lower() for word in skip_words):
-                        continue
-                # Start collecting code when we see actual Python statements
-                if any(
-                    line.strip().startswith(prefix)
-                    for prefix in ["df[", "import ", "from ", "pd.", "np."]
-                ):
-                    in_code = True
-                if in_code or line.strip().startswith("df[") or "=" in line:
-                    cleaned_lines.append(line)
+                # Try to find report section
+                if "FEATURE REPORT" in full_response or "DOMAIN UNDERSTANDING" in full_response:
+                    # Split by report markers
+                    if "FEATURE REPORT" in full_response:
+                        parts = full_response.split("FEATURE REPORT", 1)
+                        if len(parts) > 1:
+                            report_section = parts[1]
+                            # Extract report until code section
+                            if "```" in report_section:
+                                report = report_section.split("```")[0].strip()
+                            else:
+                                report = report_section.strip()
+                elif "---" in full_response:
+                    # Try splitting by separator
+                    parts = full_response.split("---", 1)
+                    if len(parts) > 1:
+                        report = parts[0].strip()
+                        full_response = parts[1].strip()
 
-            code = "\n".join(cleaned_lines).strip()
+                # Extract code block
+                if "```python" in full_response:
+                    code = full_response.split("```python")[1].split("```")[0].strip()
+                elif "```" in full_response:
+                    parts = full_response.split("```")
+                    if len(parts) >= 3:
+                        code = parts[1].strip()
+                        if code.startswith("python"):
+                            code = code[6:].strip()
+                else:
+                    # No code block, try to extract code lines
+                    lines = full_response.split("\n")
+                    code_lines = []
+                    in_code = False
+                    for line in lines:
+                        if any(
+                            line.strip().startswith(prefix)
+                            for prefix in ["df[", "import ", "from ", "pd.", "np."]
+                        ):
+                            in_code = True
+                        if (
+                            in_code
+                            or line.strip().startswith("df[")
+                            or ("=" in line and "df" in line)
+                        ):
+                            code_lines.append(line)
+                    code = "\n".join(code_lines).strip()
 
-            # Validate that we have actual code
-            if not code or len(code) < 10:
-                raw_content = response.choices[0].message.content[:200]
-                raise RuntimeError(
-                    "Generated code appears to be empty or invalid. " f"Raw response: {raw_content}"
-                )
+                # If report is empty, try to extract from beginning
+                if not report:
+                    # Take everything before code as report
+                    if "```" in full_response:
+                        report = full_response.split("```")[0].strip()
+                    else:
+                        # Try to find where code starts
+                        code_start_markers = ["df[", "import ", "from "]
+                        for marker in code_start_markers:
+                            if marker in full_response:
+                                idx = full_response.find(marker)
+                                report = full_response[:idx].strip()
+                                break
 
-            return code
+                # Clean code
+                code = self._clean_code(code)
+
+                # Validate
+                if not code or len(code) < 10:
+                    raw_content = full_response[:200]
+                    raise RuntimeError(
+                        "Generated code appears to be empty or invalid. "
+                        f"Raw response: {raw_content}"
+                    )
+
+                return code, report
+            else:
+                # Original behavior - just extract code
+                code = full_response
+
+                # Extract code block if wrapped in markdown
+                if "```python" in code:
+                    code = code.split("```python")[1].split("```")[0].strip()
+                elif "```" in code:
+                    # Handle generic code blocks
+                    parts = code.split("```")
+                    if len(parts) >= 3:
+                        code = parts[1].strip()
+                        # Remove language identifier if present
+                        # (e.g., "python" at the start)
+                        if code.startswith("python"):
+                            code = code[6:].strip()
+
+                # Clean up any remaining markdown or explanations
+                code = self._clean_code(code)
+
+                # Validate that we have actual code
+                if not code or len(code) < 10:
+                    raw_content = full_response[:200]
+                    raise RuntimeError(
+                        "Generated code appears to be empty or invalid. "
+                        f"Raw response: {raw_content}"
+                    )
+
+                return code
 
         except Exception as e:
             raise RuntimeError(f"Error generating feature code: {str(e)}")
+
+    def _clean_code(self, code: str) -> str:
+        """Clean extracted code by removing non-code lines."""
+        lines = code.split("\n")
+        cleaned_lines = []
+        in_code = False
+        for line in lines:
+            # Skip markdown headers, explanations, etc.
+            if line.strip().startswith("#") and not in_code:
+                # Allow comments in code, but skip if it's clearly
+                # an explanation
+                skip_words = ["here", "example", "note:", "important:"]
+                if any(word in line.lower() for word in skip_words):
+                    continue
+            # Start collecting code when we see actual Python statements
+            if any(
+                line.strip().startswith(prefix)
+                for prefix in ["df[", "import ", "from ", "pd.", "np."]
+            ):
+                in_code = True
+            if in_code or line.strip().startswith("df[") or "=" in line:
+                cleaned_lines.append(line)
+
+        return "\n".join(cleaned_lines).strip()
 
     def _build_prompt(
         self,
@@ -139,6 +234,7 @@ class LLMClient:
         target_column: Optional[str],
         categorical_cols: Optional[list] = None,
         problem_description: Optional[str] = None,
+        return_report: bool = False,
     ) -> str:
         """Build the prompt for feature generation"""
 
@@ -267,5 +363,30 @@ CRITICAL INSTRUCTIONS - READ CAREFULLY:
      prediction task
 
 Generate the feature engineering code:"""
+
+        if return_report:
+            prompt += """
+
+IMPORTANT: After generating the code, provide a FEATURE REPORT with the following structure:
+
+FEATURE REPORT
+==============
+
+1. DOMAIN UNDERSTANDING:
+   - Summarize your understanding of the problem domain based on the metadata and problem description
+   - Explain the business context and what we're trying to predict
+   - Describe key relationships and patterns you identified in the data
+
+2. GENERATED FEATURES EXPLANATION:
+   For each feature you generated, provide:
+   - Feature Name: [name of the feature]
+   - Description: [what this feature represents]
+   - Rationale: [why this feature is useful for predicting the target]
+   - Domain Relevance: [how this feature relates to the business problem]
+
+Format the report clearly with sections and bullet points for readability.
+"""
+
+        return prompt
 
         return prompt
