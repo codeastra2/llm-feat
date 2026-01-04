@@ -161,6 +161,16 @@ class LLMClient:
                 # Clean code
                 code = self._clean_code(code)
 
+                # Process report to convert escaped newlines to actual newlines
+                if report:
+                    # Convert literal \n to actual newlines
+                    report = report.replace("\\n", "\n")
+                    # Also handle other common escape sequences
+                    report = report.replace("\\t", "\t")
+                    # Remove any leading/trailing whitespace from each line
+                    report = "\n".join(line.rstrip() for line in report.split("\n"))
+                    report = report.strip()
+
                 # Validate
                 if not code or len(code) < 10:
                     raw_content = full_response[:200]
