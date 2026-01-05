@@ -84,6 +84,23 @@ df_with_features = llm_feat.generate_features(
 )
 ```
 
+## Model Performance
+
+See the impact of automated feature engineering on model accuracy:
+
+**Example (Diabetes Dataset):**
+[Compare results in this notebook &rarr;](example_model_perf.ipynb)
+
+## Screenshots
+
+### Auto Feature Generation in Jupyter
+![Feature Generation](https://github.com/codeastra2/llm-feat/blob/main/docs/screenshots/feature_generation.png?raw=true)
+*Feature code is generated right where you need it.*
+
+### Feature Report Example
+![Feature Report](https://github.com/codeastra2/llm-feat/blob/main/docs/screenshots/feature_report.png?raw=true)
+*Explains domain insights and feature logic clearly.*
+
 ## Key Features
 
 - **Context-aware**: Uses column descriptions to generate relevant features
@@ -91,11 +108,13 @@ df_with_features = llm_feat.generate_features(
 - **Categorical support**: Automatic encoding for categorical columns
 - **Jupyter integration**: Code auto-injected into next cell
 - **Feature reports**: Understand the reasoning behind each feature
+- **Performance boost**: Proven to improve model accuracy with domain-relevant features
 
 ## Documentation
 
 - **[API Reference](API.md)** - Complete parameter documentation and examples
-- [Examples](example_llm_feat.ipynb) - Jupyter notebook examples
+- [Basic Examples](example_llm_feat.ipynb) - Jupyter notebook examples
+- [Model Performance Comparison](example_model_perf.ipynb) - See how features improve model accuracy
 - [Changelog](CHANGELOG.md) - Version history
 
 
