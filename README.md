@@ -1,6 +1,6 @@
 # llm-feat
 
-[![Python Version](https://img.shields.io/badge/python-3.10.19%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Automatically generate feature engineering code for pandas DataFrames using LLMs. Get context-aware, target-specific features that understand your domain.
@@ -104,7 +104,7 @@ df_with_features = llm_feat.generate_features(
 ```bash
 git clone https://github.com/codeastra2/llm-feat.git
 cd llm-feat
-conda create -n llm_feat_310 python=3.10.19 -y
+conda create -n llm_feat_310 python=3.10 -y
 conda activate llm_feat_310
 poetry install
 poetry run pytest

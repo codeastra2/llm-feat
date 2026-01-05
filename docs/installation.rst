@@ -19,14 +19,14 @@ For development, clone the repository and install with Poetry:
 
    git clone https://github.com/codeastra2/llm-feat.git
    cd llm-feat
-   conda create -n llm_feat_310 python=3.10.19 -y
+   conda create -n llm_feat_310 python=3.10 -y
    conda activate llm_feat_310
    poetry install
 
 Requirements
 ------------
 
-* Python 3.10.19 or higher
+* Python 3.10.0 or higher
 * pandas 2.0.3
 * numpy 1.24.4
 * openai >= 1.0.0

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llm-feat"
-version = "0.2.2"
+version = "0.2.3"
 description = "Automated feature engineering using Large Language Models (LLMs) for tabular data"
 authors = ["Srinivas Kumar <srinivas1996kumar@gmail.com>"]
 readme = "README.md"
@@ -20,7 +20,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10.19,<4.0"
+python = ">=3.10.0,<4.0"
 pandas = "2.0.3"
 numpy = "1.24.4"
 openai = ">=1.0.0"
