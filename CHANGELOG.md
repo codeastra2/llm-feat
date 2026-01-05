@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2025-01-XX
+
+### Added
+- Sphinx documentation for Read the Docs
+- API documentation with complete parameter reference
+- Feature report generation documentation
+- Updated README with concise quick start guide
+
+### Changed
+- Updated author information to use GitHub profile link
+- Improved documentation structure and examples
+
+## [0.2.1] - 2025-01-04
+
 ### Added
 - Categorical feature engineering support
   - Automatic detection of categorical columns from metadata

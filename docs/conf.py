@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "llm-feat"
 copyright = "2025, Srinivas Kumar"
 author = "Srinivas Kumar"
-release = "0.2.1"
+release = "0.2.2"
 
 # General configuration
 extensions = [
