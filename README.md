@@ -3,165 +3,124 @@
 [![Python Version](https://img.shields.io/badge/python-3.10.19%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-llm-feat is a Python library that automatically generates feature engineering code for pandas datasets using Large Language Models. Generate context-aware, target-specific features that can be automatically added to your DataFrame or customized before execution. 
+Automatically generate feature engineering code for pandas DataFrames using LLMs. Get context-aware, target-specific features that understand your domain.
 
-## 🌟 Key Features
-
-- 🤖 **LLM-Powered**: Uses OpenAI models to generate context aware feature engineering code.
-- 📝 **Dual Modes**: Get code suggestions or directly add features
-- 🔧 **Jupyter Support**: Automatically injects code into next cell in Jupyter notebooks
-- 🎯 **Metadata-Driven**: Uses column descriptions to generate contextually relevant features
-- 🎯 **Target-Aware**: Generates features specifically relevant to your prediction task
-
-## 📦 Installation
-
-To install the latest release of llm-feat from PyPI:
+## Installation
 
 ```bash
 pip install llm-feat
 ```
 
-## 🚀 Quick Start
-
-### 1. Setup
+## Quick Start
 
 ```python
 import pandas as pd
 import llm_feat
 
-# Set your OpenAI API key
-llm_feat.set_api_key("your-openai-api-key-here")
-# Or use environment variable: export OPENAI_API_KEY="your-key"
-```
+llm_feat.set_api_key("your-openai-api-key")  # or set OPENAI_API_KEY env var
 
-### 2. Prepare Data and Metadata
-Consider the problem of healthy and unhealthy labelling:
-```python
-# Your dataset with target column
+# Your data
 df = pd.DataFrame({
-    'height': [170, 175, 180, 165, 185, 172, 178, 168, 182, 174],
-    'weight': [70, 75, 80, 65, 85, 72, 78, 68, 83, 74],
-    'bmi': [24.2, 24.5, 24.7, 23.9, 24.8, 24.3, 24.6, 24.1, 25.0, 24.4],
-    'health_score': [1, 1, 0, 1, 0, 1, 1, 1, 0, 1]  # Target: 1=healthy, 0=unhealthy
+    'income': [50000, 60000, 70000],
+    'expenses': [30000, 35000, 40000],
+    'target': [1, 0, 1]
 })
 
-# Metadata with column descriptions and target definition
+# Metadata describing your columns
 metadata_df = pd.DataFrame({
-    'column_name': ['height', 'weight', 'bmi', 'health_score'],
-    'description': [
-        'Height in centimeters',
-        'Weight in kilograms',
-        'Body Mass Index',
-        'Health classification score'
-    ],
-    'data_type': ['numeric', 'numeric', 'numeric', 'numeric'],
-    'label_definition': [None, None, None, '1 if healthy, 0 if unhealthy']
+    'column_name': ['income', 'expenses', 'target'],
+    'description': ['Annual income', 'Annual expenses', 'Binary target'],
+    'data_type': ['numeric', 'numeric', 'numeric'],
+    'label_definition': [None, None, '1 if positive, 0 if negative']
 })
-```
 
-### 3. Generate Features
-
-#### Mode 1: Get Code (Recommended for Jupyter)
-We will now generate features for the above dataset based on feature descriptions in the metadata and prior knowledge of the LLM.
-
-```python
-code = llm_feat.generate_features(df, metadata_df, mode='code', model='gpt-4o-mini')
+# Generate features
+code = llm_feat.generate_features(df, metadata_df, mode='code')
 print(code)
 ```
 
-**Example Output:**
+**Generated Code:**
 ```python
 import numpy as np
 
-df['height_weight_ratio'] = df['height'] / df['weight'].replace(0, np.nan)
-df['bmi_squared'] = df['bmi'] ** 2
-df['weight_bmi_interaction'] = df['weight'] * df['bmi']
-df['health_score_bmi_diff'] = df['health_score'] - df['bmi'].apply(lambda x: 1 if x < 24.9 else 0)
-df['height_bmi_category'] = pd.cut(df['bmi'], bins=[0, 18.5, 24.9, 29.9, np.inf], 
-                                    labels=['Underweight', 'Normal', 'Overweight', 'Obese'])
+df['income_to_expense_ratio'] = np.where(df['expenses'] != 0, df['income'] / df['expenses'], np.nan)
+df['savings'] = df['income'] - df['expenses']
+df['savings_to_income_ratio'] = np.where(df['income'] != 0, df['savings'] / df['income'], np.nan)
 ```
 
-> **Note**: In Jupyter notebooks, the code is automatically injected into the next cell. The LLM generates target-aware features that are relevant to predicting `health_score`.
+## Feature Reports
 
-#### Mode 2: Direct Feature Addition
+Get detailed explanations of why each feature was generated:
 
 ```python
-df_with_features = llm_feat.generate_features(df, metadata_df, mode='direct', model='gpt-4o-mini')
-print(df_with_features.head())
+code, report = llm_feat.generate_features(
+    df, metadata_df, mode='code', return_report=True
+)
+print(report)
 ```
 
-**Example Output:**
+**Example Report:**
 ```
-   height  weight   bmi  health_score  height_weight_ratio  bmi_squared  \
-0     170      70  24.2             1             2.428571      585.64   
-1     175      75  24.5             1             2.333333      600.25   
-2     180      80  24.7             0             2.250000      610.09   
+FEATURE REPORT
+==============
 
-   weight_bmi_interaction  health_score_bmi_diff height_bmi_category  
-0                1694.0                      0              Normal  
-1                1837.5                      0              Normal  
-2                1976.0                      0              Normal  
+1. DOMAIN UNDERSTANDING:
+   - Problem: Predicting binary target based on income and expenses
+   - Key relationships: Income-to-expense ratios indicate financial health
+
+2. GENERATED FEATURES EXPLANATION:
+   - Feature: income_to_expense_ratio
+     Rationale: Higher ratios indicate better financial stability
+     Domain Relevance: Directly related to predicting positive outcomes
 ```
 
-## 📖 Usage Examples
+## Direct Mode
 
-### Jupyter Notebook Example
+Add features directly to your DataFrame:
 
-See [example_llm_feat.ipynb](example_llm_feat.ipynb) for complete usage examples in Jupyter notebook format.
+```python
+df_with_features = llm_feat.generate_features(
+    df, metadata_df, mode='direct', model='gpt-4o-mini'
+)
+```
 
-### Python Script Example
+## Key Features
 
-You can also run the example as a standalone Python script:
+- **Context-aware**: Uses column descriptions to generate relevant features
+- **Target-aware**: Generates features specific to your prediction task
+- **Categorical support**: Automatic encoding for categorical columns
+- **Jupyter integration**: Code auto-injected into next cell
+- **Feature reports**: Understand the reasoning behind each feature
+
+## Documentation
+
+- [Read the Docs](https://llm-feat.readthedocs.io/) - Full documentation
+- [API Reference](API.md) - Complete parameter documentation
+- [Examples](example_llm_feat.ipynb) - Jupyter notebook examples
+
+
+## Development
 
 ```bash
-poetry run python example_llm_feat.py
+git clone https://github.com/codeastra2/llm-feat.git
+cd llm-feat
+conda create -n llm_feat_310 python=3.10.19 -y
+conda activate llm_feat_310
+poetry install
+poetry run pytest
 ```
-> **Note**: The notebook and script examples use `df` as the DataFrame variable name, which is required for the generated code to work directly.
 
+## License
 
-## Development Installation
-### Prerequisites
-- Python 3.10.19 or higher (tested with Python 3.10.19)
-- [Poetry](https://python-poetry.org/docs/#installation) (for development)
-- [Conda](https://docs.conda.io/en/latest/miniconda.html) (optional, for environment management)
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/codeastra2/llm-feat.git
-   cd llm-feat
-   ```
-2. **Create conda environment**:
-   ```bash
-   conda create -n llm_feat_310 python=3.10.19 -y;
-   conda activate llm_feat_310
-   ```
-3. **Install Poetry** (if not already installed):
-   ```bash
-   curl -sSL https://install.python-poetry.org | python3 -
-   ```
-4. **Install dependencies**:
-   ```bash
-   poetry install
-   ```
-5. **Add env to jupyter kernels(to be used in ipython notebooks)**:
-   ```bash
-   poetry run python -m ipykernel install --user --name llm_feat_310 --display-name "Python (llm_feat_310)"
-   ```
-###  Running Tests
-   ```bash
-   poetry run pytest
-   ```
+MIT License - see [LICENSE](LICENSE) file for details.
 
-## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Author
 
-## 🤝 Contributing
-Contributions are welcome! Please check our GitHub repository for guidelines.
+Srinivas Kumar - [@codeastra2](https://github.com/codeastra2)
 
-## 👤 Author
+## Links
 
-**Srinivas Kumar** - [srinivas1996kumar@gmail.com](mailto:srinivas1996kumar@gmail.com)
-
-## 📚 Documentation
-- [CHANGELOG.md](CHANGELOG.md) - Version history and changes
-For any questions or issues, please open an issue on our GitHub repository.
+- [GitHub](https://github.com/codeastra2/llm-feat)
+- [API Reference](API.md)
+- [Changelog](CHANGELOG.md)
 

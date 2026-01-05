@@ -35,6 +35,11 @@ flake8 = "^6.0.0"
 ipykernel = "^7.1.0"
 scikit-learn = "^1.0.0"
 
+[tool.poetry.group.docs.dependencies]
+sphinx = "^5.0.0"
+sphinx-rtd-theme = "^1.0.0"
+myst-parser = "^1.0.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
