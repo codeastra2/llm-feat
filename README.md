@@ -94,9 +94,9 @@ df_with_features = llm_feat.generate_features(
 
 ## Documentation
 
-- [Read the Docs](https://llm-feat.readthedocs.io/) - Full documentation
-- [API Reference](API.md) - Complete parameter documentation
+- **[API Reference](API.md)** - Complete parameter documentation and examples
 - [Examples](example_llm_feat.ipynb) - Jupyter notebook examples
+- [Changelog](CHANGELOG.md) - Version history
 
 
 ## Development
